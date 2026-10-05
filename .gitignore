@@ -1,0 +1,36 @@
+# macOS e file temporanei
+.DS_Store
+._*
+*.swp
+*.swo
+*~
+.smbdelete*
+
+# Impostazioni locali degli editor
+.vscode/
+.idea/
+
+# Output Maven e PlatformIO
+target/
+.pio/
+*.class
+
+# Segreti e configurazioni locali
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+*.keystore
+.aws/
+
+# Log e backup
+*.log
+*.bak
+
+# Media e configurazioni dell'installazione reale
+/AudioPlayer/audio/
+/videoPlayer/USB/

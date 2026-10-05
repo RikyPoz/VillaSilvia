@@ -1,0 +1,50 @@
+File contenenti messaggi mqtt per vedere se i dispositivi funzionano correttamente
+
+IP = Ip privato del coordinatore es : 192.168.0.2
+-------------
+TEST PER LUCI LOCALI -> DA CAMBIARE IL TOPIC PER CIASCUNA LUCE (id_shelly/rpc)
+
+mosquitto_pub -h IP -t shelly-disco/rpc -m '{ "id": 1, "src": "server", "method": "Switch.Set", "params": { "id": 0, "on": true } }'
+
+mosquitto_pub -h IP -t shelly-disco/rpc -m '{ "id": 1, "src": "server", "method": "Switch.Set", "params": { "id": 0, "on": false } }'
+
+--------------
+TEST AUDIO
+
+mosquitto_pub -h IP -t bonci/audioPlayer/command -m "ON"
+mosquitto_pub -h IP -t bonci/audioPlayer/command -m "OFF"
+mosquitto_pub -h IP -t bonci/audioPlayer/command -m "PAUSE"
+mosquitto_pub -h IP -t bonci/audioPlayer/command -m "VOLUME_UP"
+mosquitto_pub -h IP -t bonci/audioPlayer/command -m "VOLUME_DOWN"
+
+--------------
+TEST PLAFONIERE
+mosquitto_pub -h IP -t bonci/plafoniere/command -m "STARTING"
+mosquitto_pub -h IP -t bonci/plafoniere/command -m "ON"
+mosquitto_pub -h IP -t bonci/plafoniere/command -m "OFF"
+mosquitto_pub -h IP -t bonci/plafoniere/command -m "LIGHT_UP"
+mosquitto_pub -h IP -t bonci/plafoniere/command -m "LIGHT_DOWN"
+mosquitto_pub -h IP -t bonci/plafoniere/command -m "COLD_UP"
+mosquitto_pub -h IP -t bonci/plafoniere/command -m "WARM_UP"
+
+PER PLAFONIERA DA 1 A 6
+mosquitto_pub -h IP -t bonci/plafoniera1/command -m "ON" ...
+
+
+
+--------------
+STANZA GLOBALE
+
+mosquitto_pub -h IP -t bonci/power/command -m '{"command":"sleep"}'
+mosquitto_pub -h IP -t bonci/power/command -m '{"command":"wake"}'
+mosquitto_pub -h IP -t bonci/power/command -m '{"command":"shutdown"}'
+
+
+
+
+mosquitto_pub -h IP -p 1883 -t bonci/videoPlayer/event -m '{"deviceId": "videoPlayer-piano", "event": "triggered", "devices": [{"id": "shelly-disco", "onAfter": 70, "offAfter": 79}]}'
+
+
+
+
+

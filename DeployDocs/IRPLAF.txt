@@ -1,0 +1,30 @@
+Questo file contiene tutti i codici IR duplicati dal telecomando originale delle plafoniere
+
+== ON/OFF ==
+Protocollo: NEC
+Codice HEX: 0x807F807F
+Bit: 32
+
+== LIGHT UP ==
+Protocollo: NEC
+Codice HEX: 0x807FC03F
+Bit: 32
+
+== LIGHT DOWN ==
+Protocollo: NEC
+Codice HEX: 0x807F10EF
+Bit: 32
+
+WARM
+Protocollo: NEC
+Codice HEX: 0x807FA05F
+Bit: 32
+
+
+COLD
+Protocollo: NEC
+Codice HEX: 0x807F609F
+Bit: 32
+
+
+

@@ -1,0 +1,81 @@
+File per configurare i nuovi raspberry (indipendentemente dal loro utilizzo nella stanza)
+
+SAMBA -> utilizzato per la condivisione di file da remoto
+sudo apt install samba samba-common-bin
+
+sudo nano /etc/samba/smb.conf
+
+[condivisa]
+   path = /home/villasilvia/Desktop/condivisa
+   browseable = yes
+   writeable = yes
+   guest ok = yes
+   public = yes
+   create mask = 0777
+   directory mask = 0777
+   force user = villasilvia
+
+sudo systemctl restart smbd
+
+JAVA
+sudo apt install openjdk-17-jdk
+
+MVN
+sudo apt install maven
+
+WI-FI
+Manualmente inizializzare la connessione automatica al router della stanza.
+Bypass Wi-Fi manuale (wpa_supplicant + dhclient)
+
+Procedura di fallback da usare se NetworkManager/dhcpcd falliscono o perdono la connessione:
+1)Disabilita i gestori di rete automatici (NetworkManager / dhcpcd) per evitare conflitti e installa dhclient.
+2)Configura SSID e password direttamente in /etc/wpa_supplicant/wpa_supplicant.conf.
+3)Crea un servizio systemd (manual-wifi.service) che all'avvio associa wlan0 al Wi-Fi e richiede l'IP via DHCP,
+riprovando automaticamente ogni 10 secondi in caso di disconnessione.
+
+1)
+sudo systemctl stop NetworkManager
+sudo systemctl disable NetworkManager
+
+Opzionale
+
+sudo systemctl stop dhcpcd
+sudo systemctl disable dhcpcd
+
+sudo apt install isc-dhcp-client
+
+2)
+Sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
+
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+country=IT
+
+network={
+    ssid="SSID_PLACEHOLDER"
+    psk="PASSWORD_PLACEHOLDER"
+    key_mgmt=WPA-PSK
+}
+
+3)
+sudo nano /etc/systemd/system/manual-wifi.service
+
+[Unit]
+Description=Connessione Wi-Fi manuale con wpa_supplicant e dhclient
+After=network-pre.target
+Wants=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/bash -c 'wpa_supplicant -B -i wlan0 -c /etc/wpa_supplicant/wpa_supplicant.conf && dhclient wlan0'
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+
+
+
+sudo systemctl daemon-reload
+sudo systemctl enable manual-wifi.service
+sudo systemctl start manual-wifi.service
