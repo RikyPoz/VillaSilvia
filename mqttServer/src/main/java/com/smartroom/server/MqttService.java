@@ -11,6 +11,7 @@ import io.vertx.mqtt.MqttClientOptions;
 public class MqttService {
 
     private final MqttClient client;
+
     private final String audioTopic = "bonci/audioPlayer/command"; // broker -> audioPlayer (ON,OFF,VOLUME...)
     private final String plafTopic = "bonci/plafoniere/command"; // broker -> plafoniere (ON,OFF,LIGHT_UP......)
     private final String videoTopic = "bonci/videoPlayer/command"; // broker -> videoPlayer
@@ -73,15 +74,27 @@ public class MqttService {
                 case videoEventTopic:
                     deviceId = data.getString("deviceId");
                     String event = data.getString("event");
-                    if (deviceId == null) {
-                        System.err.println("deviceId mancante nel messaggio JSON su topic: " + topic);
+
+                    if (deviceId == null || deviceId.isBlank()) {
+                        System.err.println("deviceId mancante o vuoto su topic: " + topic);
                         return;
                     }
 
-                    if (event.equals("triggered")) {
-                        handleTriggered(deviceId, data, vertx);
-                    } else if (event.equals("ended")) {
-                        handleEnded(deviceId);
+                    if (event == null || event.isBlank()) {
+                        System.err.println("event mancante o vuoto su topic: " + topic);
+                        return;
+                    }
+
+                    switch (event) {
+                        case "triggered":
+                            handleTriggered(deviceId, data, vertx);
+                            break;
+                        case "ended":
+                            handleEnded(deviceId);
+                            break;
+                        default:
+                            System.err.println("Evento sconosciuto su topic "
+                                    + topic + ": " + event);
                     }
                     break;
                 // topic per ricevere lo stato dei device appena si connettono alla rete (si
