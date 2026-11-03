@@ -9,6 +9,7 @@ Developed as part of my **BSc thesis in Computer Science and Engineering at the 
 **Technologies:** Java · C++ · Vert.x · MQTT · Mosquitto · Raspberry Pi · ESP32 · Pi4J · JavaFX · PlatformIO
 
 [Read the thesis (Italian)](Tesi.pdf)
+[Read the summary slides](Slides.pdf)
 
 ## Project highlights
 
@@ -30,20 +31,6 @@ The implementation contains station-specific behavior, including a separate pian
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    Sensor[Ultrasonic proximity sensor] --> Video[Video playback process]
-    Video -->|Local HTTP events| Client[Video station MQTT client]
-    Client <-->|MQTT| Broker[Mosquitto broker]
-    Coordinator[Java / Vert.x coordinator] <-->|MQTT| Broker
-    Broker --> Audio[Audio station]
-    Broker --> ESP[ESP32 infrared transmitters]
-    ESP -->|IR commands| Ceiling[Existing ceiling lights]
-    Broker --> Shelly[Shelly smart plugs]
-    Shelly --> Local[Station lighting]
-```
-
-The thesis deployment uses a Raspberry Pi coordinator to host both the broker and the orchestration application. The thesis describes a coordinator-hosted Wi-Fi hotspot; the repository also contains router configuration notes and deployment-specific network addresses.
 
 | Component | Role | Main technologies |
 | --- | --- | --- |
@@ -55,112 +42,6 @@ The thesis deployment uses a Raspberry Pi coordinator to host both the broker an
 | Local lighting | Switches station lights according to configured timings | Shelly devices, MQTT RPC |
 | IR receiver utility | Captures the original remote-control codes during setup | ESP32, IR receiver |
 
-## Repository structure
-
-```text
-VillaSilvia/
-├── mqttServer/                 # Coordinator and preliminary web dashboard
-├── videoPlayer/
-│   ├── MqttVideoClient/         # MQTT client, local HTTP API and process control
-│   ├── main-app/               # Video playback, proximity sensing and media scanning
-│   └── PlayVideo-piano.java     # Station-specific piano variant
-├── AudioPlayer/                # Ambient audio playback and MQTT commands
-├── ESP32IR/                    # MQTT-to-IR transmitter firmware
-├── ESP-IR_Receiver/             # IR code acquisition utility
-├── DeployDocs/                 # Network, device and deployment notes
-└── Tesi.pdf                    # Thesis: design, implementation and testing
-```
-
-## Current implementation and thesis scope
-
-The repository has differences from the implementation described in the thesis:
-
-- **Video playback:** the thesis describes a JavaFX video player. The current `videoPlayer/main-app` implementation launches **mpv** for video playback, **feh** for a background image and **socat** for mpv IPC. JavaFX remains in use for audio playback and in the Maven dependencies.
-- **MQTT naming:** current code uses the `bonci/...` topics listed below. Earlier thesis examples use `smartroom/...` topics.
-- **Media discovery:** `UsbMediaScanner` currently reads a configured local directory named `USB`; it does not automatically discover arbitrary mounted USB devices.
-- **Dashboard:** `mqttServer` includes static web resources and device-status endpoints. The call that updates the device-status registry is commented out, so this should be treated as a preliminary interface rather than a completed monitoring dashboard.
-
-## MQTT interface
-
-Topics and payloads below reflect the current source code.
-
-| Topic | Purpose | Payload |
-| --- | --- | --- |
-| `bonci/videoPlayer/event` | Video playback events | JSON containing `deviceId`, `event` and, for triggers, `lights` |
-| `bonci/videoPlayer/command` | Video station lifecycle | `SLEEP`, `WAKE`, `SHUTDOWN` |
-| `bonci/audioPlayer/command` | Ambient audio control | `ON`, `OFF`, `PAUSE`, `SHUTDOWN` |
-| `bonci/plafoniere/command` | Commands to all ceiling-light controllers | `ON`, `OFF`, `LIGHT_UP`, `LIGHT_DOWN`, `WARM_UP`, `COLD_UP` |
-| `bonci/<deviceId>/command` | Initialization of a specific ceiling-light controller | `STARTING` |
-| `bonci/power/command` | Room-level lifecycle control | JSON with `command`: `sleep`, `wake` or `shutdown` |
-| `bonci/online_data` | Device connection announcements | JSON device metadata |
-| `<shelly-id>/rpc` | Local light switching | Shelly `Switch.Set` JSON RPC |
-
-For each video station, `light.json` defines the associated Shelly devices and their switching delays in seconds. For example:
-
-```json
-[
-  {
-    "id": "YOUR_SHELLY_DEVICE_ID",
-    "onAfter": 1,
-    "offAfter": 30
-  }
-]
-```
-
-Use the actual MQTT identifier of the Shelly device. In the current coordinator, only strictly positive delays schedule a switching command; `0` does not mean "execute immediately".
-
-## Setup and build
-
-This repository contains installation-specific applications and configuration notes. Running the full system requires the target devices, wiring, media assets and adaptation of the paths and identifiers in the source.
-
-### Requirements
-
-- Raspberry Pi devices running a compatible Linux environment, with a graphical session for multimedia playback.
-- JDK 17 and Maven; JavaFX runtime/native libraries compatible with the target architecture for the audio application.
-- A reachable Mosquitto broker on the local network.
-- Pi4J-compatible GPIO access and correctly wired ultrasonic sensors.
-- `mpv`, `feh`, `socat` and `unclutter` for the current video implementation; display-control utilities required by the deployment scripts.
-- PlatformIO with the ESP32 Arduino framework for the IR modules.
-- Compatible Shelly devices, IR-controlled ceiling fixtures and the required media files.
-
-### Configuration
-
-Before building or starting the applications:
-
-1. Set the broker address consistently across the Java clients and ESP32 firmware. The coordinator currently connects to `localhost`; client addresses are installation-specific.
-2. Assign each station and IR controller its intended device ID. Station names are used by the coordinator's visit logic.
-3. Adapt absolute filesystem paths, launch scripts, display/audio settings and `systemd` service definitions to the target machines.
-4. Configure Wi-Fi, GPIO assignments and IR codes for the actual hardware.
-5. Supply the media files. The video scanner expects an `.mp4`, a `.jpg` and a non-empty `light.json` in its configured directory. The audio implementation currently loads `audio/test.mp3` relative to its working directory.
-
-### Build commands
-
-From the repository root, the Java applications are separate Maven projects:
-
-```bash
-mvn -f mqttServer/pom.xml clean package
-mvn -f videoPlayer/MqttVideoClient/pom.xml clean package
-mvn -f videoPlayer/main-app/pom.xml clean package
-mvn -f AudioPlayer/pom.xml clean package
-```
-
-Build the ESP32 projects with PlatformIO:
-
-```bash
-pio run -d ESP32IR
-pio run -d ESP-IR_Receiver
-```
-
-These commands follow the committed project structure; they are not a complete installation procedure. In particular, the video process manager expects a `target/distribution/run.sh` launcher, while the Maven distribution-assembly steps are commented out. Prepare the launcher and runtime files, or adapt the process manager, before starting the video service.
-
-Deployment references:
-
-- [General device and network notes](DeployDocs/)
-- [Coordinator configuration](mqttServer/configuration.txt)
-- [Video station configuration](videoPlayer/videoPlayerConfiguration.txt)
-- [Audio launch script](AudioPlayer/start.sh)
-
-The coordinator and each video station's local HTTP service both use port `8080` on their respective hosts. Running them together on a single development machine requires changing one of the ports and the corresponding client configuration.
 
 ## Validation
 
