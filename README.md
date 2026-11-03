@@ -6,10 +6,16 @@ The project connects previously independent devices through a local MQTT network
 
 Developed as part of my **BSc thesis in Computer Science and Engineering at the University of Bologna**, academic year **2024/2025**.
 
+<p align="center">
+  <img src="docs/images/bonci-room.jpg" alt="The Bonci room at Villa Silvia, with its piano and museum exhibits" height="280">
+  <img src="docs/images/ceiling-light-esp32.jpg" alt="Interior of a ceiling light fitted with an ESP32 and an infrared transmitter" height="280">
+</p>
+
+*The Bonci room (left) and an existing ceiling light fitted with an ESP32-based infrared controller (right). Photos from the thesis presentation.*
+
 **Technologies:** Java · C++ · Vert.x · MQTT · Mosquitto · Raspberry Pi · ESP32 · Pi4J · JavaFX · PlatformIO
 
-[Read the thesis (Italian)](Tesi.pdf)
-[Read the summary slides](Slides.pdf)
+[Read the thesis (Italian)](Tesi.pdf) · [View the presentation (Italian)](Slides.pdf)
 
 ## Project highlights
 
